@@ -4,7 +4,20 @@ cd ~
 git clone https://github.com/arrfour/dotfiles.git
 
 cd dotfiles
-
-then run install.sh
+```
+### Run install
+```
+./install.sh
 ```
 
+# Uninstallation
+
+### Change to dotfiles folder
+```
+cd ~/dotfiles
+```
+
+### Run uninstaller
+```
+./uninstall.sh
+```
