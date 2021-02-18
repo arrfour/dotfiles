@@ -8,3 +8,4 @@ alias glog='git log --oneline --graph --color --all --decorate'
 # alias ll='ls -alh' currently defined in .bashrc
 alias pip-upgrade="pip freeze --user | cut -d'=' -f1 | xargs -n1 pip install -U"
 # add aliases below - this is a comment to test git commits
+alias lt='ls --human-readable --size -1 -S --classify'
