@@ -140,3 +140,4 @@ HISTTIMEFORMAT="%F %T  "
 # find great bash tips at
 # https://opensource.com/article/18/7/admin-guide-bash
 # notes and changes 12/27/2018
+PATH=$PATH:~/.local/bin

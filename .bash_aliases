@@ -1,3 +1,4 @@
+alias clr=clear
 alias gti='git'
 alias tmux='tmux -2'
 alias less='less -R'
