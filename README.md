@@ -40,6 +40,14 @@ cd dotfiles
 ./install.sh
 ```
 
+## Updating
+
+To pull the latest changes and refresh your configurations:
+
+```
+./update.sh
+```
+
 ## Uninstallation
 
 ### Change to dotfiles folder
