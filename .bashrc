@@ -94,6 +94,28 @@ alias em='emacs -nw'
 alias dd='dd status=progress'
 alias _='sudo'
 
+# Docker to Podman aliases
+#alias docker='podman'
+#alias docker-compose='podman compose'
+#alias docker-buildx='podman buildx'
+#alias docker-ctx='podman context'
+#alias docker-run='podman run'
+#alias docker-ps='podman ps'
+#alias docker-images='podman images'
+#alias docker-rm='podman rm'
+#alias docker-rmi='podman rmi'
+#alias docker-exec='podman exec'
+#alias docker-logs='podman logs'
+#alias docker-stop='podman stop'
+#alias docker-start='podman start'
+#alias docker-pull='podman pull'
+#alias docker-push='podman push'
+#alias docker-commit='podman commit'
+#alias docker-inspect='podman inspect'
+#alias docker-network='podman network'
+#alias docker-volume='podman volume'
+#alias docker-system='podman system'
+
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
@@ -133,3 +155,5 @@ HISTTIMEFORMAT="%F %T  "
 # https://opensource.com/article/18/7/admin-guide-bash
 # notes and changes 12/27/2018
 PATH=$PATH:~/.local/bin
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
