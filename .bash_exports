@@ -18,5 +18,6 @@ if command -v rbenv >/dev/null 2>&1; then
   export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
 fi
 
-export EDITOR=/usr/bin/vim
+export EDITOR="nano"
+export VISUAL="nano"
 export TERMINAL="flatpak run org.wezfurlong.wezterm"
