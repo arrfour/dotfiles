@@ -40,6 +40,12 @@ cd dotfiles
 ./install.sh
 ```
 
+## Notes
+
+- Ripgrep ignore rules are included to avoid runaway scans on large folders
+  (cache directories, container/flatpak storage, and GoogleDrive), which can
+  spike CPU usage when file searches recurse through the home directory.
+
 ## Updating
 
 To pull the latest changes and refresh your configurations:

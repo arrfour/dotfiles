@@ -1,0 +1,11 @@
+**/squashfs-root
+**/node_modules
+**/.cache
+**/.npm
+**/.cargo
+**/.local/share/containers
+**/.local/share/flatpak
+**/.local/share/Steam
+**/GoogleDrive/.cache
+/var/home/arr4/GoogleDrive
+/tmp
