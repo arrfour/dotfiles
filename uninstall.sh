@@ -11,4 +11,16 @@ for file in $(find . -maxdepth 1 -name ".*" -type f  -printf "%f\n" ); do
     fi
 done
 
+# Uninstall .config subdirectories
+config_root="$HOME/.config"
+if [ -d ".config" ]; then
+    for dir in $(ls -d .config/*/); do
+        target_dir=$(basename "$dir")
+        if [ -h "$config_root/$target_dir" ]; then
+            echo "Removing symlink for $target_dir"
+            rm -f "$config_root/$target_dir"
+        fi
+    done
+fi
+
 echo "Uninstalled"

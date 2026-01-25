@@ -19,3 +19,4 @@ if command -v rbenv >/dev/null 2>&1; then
 fi
 
 export EDITOR=/usr/bin/vim
+export TERMINAL="flatpak run org.wezfurlong.wezterm"

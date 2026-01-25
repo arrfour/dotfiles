@@ -8,6 +8,13 @@ case $- in
       *) return;;
 esac
 
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+elif [ -f /etc/bash.bashrc ]; then
+    . /etc/bash.bashrc
+fi
+
 export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/share/games:/usr/local/sbin:/usr/sbin:/sbin:~/.local/bin
 
 # don't put duplicate lines or lines starting with space in the history.
