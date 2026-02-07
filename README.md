@@ -1,18 +1,22 @@
 # dotfiles
 
 ## TL;DR
-Customized configuration files for Bash, Vim, and Tmux. 
+
+Customized configuration files for Bash, Vim, and Tmux.
+
 - **Bash**: Modularized with separate aliases, exports, and wrappers. Colored man pages and enhanced prompt.
 - **Vim**: Plugin-ready with Pathogen, pre-configured for NERDTree, Airline, and DevOps tools (Ansible/Terraform).
 - **Tmux**: Streamlined status bar with network/VPN info and pane-resize shortcuts.
 
 ### Prompt Preview
+
 The new prompt is multiline, color-coded, and includes dynamic status indicators:
 
 ```text
 ┌──[user@hostname]─[~/Projects/dotfiles]
 └──╼ $ 
 ```
+
 *(If a command fails, a red `[✗]` indicator appears in the top line.)*
 
 ---
@@ -67,3 +71,17 @@ cd ~/dotfiles
 ```
 ./uninstall.sh
 ```
+
+## Changelog
+
+### Security Fixes
+
+- Removed `alias _='sudo'` from `.bashrc`.
+- Added strict file allowlist to `install.sh` and `uninstall.sh`.
+- Added pre-commit hook to block secrets.
+
+### Improvements
+
+- `install.sh` now supports `-n` (dry-run) and `-f` (force).
+- Added safety prompts before overwriting files.
+- Added backup creation (`.dtbak`) for existing files.

@@ -1,26 +1,63 @@
 #!/bin/bash
 
-# Loop through all the dotfiles, if the file is a symlink then remove it
-# Then if the backup file exists, restore it to it's original location
-for file in $(find . -maxdepth 1 -name ".*" -type f  -printf "%f\n" ); do
-    if [ -h ~/$file ]; then
-        rm -f ~/$file
+# Configuration (Must match install.sh)
+FILES_TO_LINK=(
+    ".bash_aliases"
+    ".bash_exports"
+    ".bash_profile"
+    ".bash_wrappers"
+    ".bashrc"
+    ".screenrc"
+    ".tmux.conf"
+    ".vimrc"
+)
+
+CONFIG_DIRS=(
+    "ripgrep"
+    "wezterm"
+)
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+remove_link() {
+    local target_file="$HOME/$1"
+    
+    if [ -L "$target_file" ]; then
+        rm -f "$target_file"
+        echo -e "${BLUE}Removed symlink for $1${NC}"
     fi
-    if [ -e ~/${file}.dtbak ]; then
-        mv -f ~/$file{.dtbak,}
+
+    if [ -e "${target_file}.dtbak" ]; then
+        mv -f "${target_file}.dtbak" "$target_file"
+        echo -e "${GREEN}Restored backup for $1${NC}"
     fi
+}
+
+remove_config_link() {
+    local target_dir="$HOME/.config/$1"
+
+    if [ -L "$target_dir" ]; then
+        rm -f "$target_dir"
+        echo -e "${BLUE}Removed symlink for .config/$1${NC}"
+    fi
+
+    if [ -e "${target_dir}.dtbak" ]; then
+        mv -f "${target_dir}.dtbak" "$target_dir"
+        echo -e "${GREEN}Restored backup for .config/$1${NC}"
+    fi
+}
+
+echo "Starting uninstallation..."
+
+for file in "${FILES_TO_LINK[@]}"; do
+    remove_link "$file"
 done
 
-# Uninstall .config subdirectories
-config_root="$HOME/.config"
-if [ -d ".config" ]; then
-    for dir in $(ls -d .config/*/); do
-        target_dir=$(basename "$dir")
-        if [ -h "$config_root/$target_dir" ]; then
-            echo "Removing symlink for $target_dir"
-            rm -f "$config_root/$target_dir"
-        fi
-    done
-fi
+for dir in "${CONFIG_DIRS[@]}"; do
+    remove_config_link "$dir"
+done
 
 echo "Uninstalled"
