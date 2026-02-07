@@ -31,7 +31,7 @@ To fully utilize these dotfiles, the following tools and plugins are recommended
 
 ## Installation
 
-```
+```bash
 cd ~
 git clone https://github.com/arrfour/dotfiles.git
 
@@ -40,7 +40,7 @@ cd dotfiles
 
 ### Run install
 
-```
+```bash
 ./install.sh
 ```
 
@@ -54,7 +54,7 @@ cd dotfiles
 
 To pull the latest changes and refresh your configurations:
 
-```
+```bash
 ./update.sh
 ```
 
@@ -62,13 +62,13 @@ To pull the latest changes and refresh your configurations:
 
 ### Change to dotfiles folder
 
-```
+```bash
 cd ~/dotfiles
 ```
 
 ### Run uninstaller
 
-```
+```bash
 ./uninstall.sh
 ```
 
