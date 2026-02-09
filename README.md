@@ -1,177 +1,63 @@
 # dotfiles
 
-## TL;DR
+Managed configuration files for Bash, Tmux, WezTerm, and more.
 
-Customized configuration files for Bash and Tmux.
+## Features
 
-- **Bash**: Modularized with separate aliases, exports, and wrappers. Enhanced multiline prompt with system info.
-- **Tmux**: Streamlined status bar with network/VPN info and pane-resize shortcuts.
-- **Optional**: [Starship](https://starship.rs/) prompt for a modern, cross-shell experience.
-
-### Prompt Preview
-
-The prompt is multiline, color-coded, and includes dynamic status indicators:
-
-**Normal state:**
-```text
-┌──[user@hostname]─[debian 5.15.0 | 4C | 15Gi]─[~/Projects/dotfiles]
-└──╼ $ 
-```
-
-**After a failed command:**
-```text
-┌──[✗]─[user@hostname]─[debian 5.15.0 | 4C | 15Gi]─[~/Projects/dotfiles]
-└──╼ $ 
-```
-
-**Components:**
-- **Exit status**: Red `[✗]` appears when the previous command fails
-- **User@hostname**: Color-coded (red for root, white for normal user)
-- **System info**: Shows distro, kernel version, CPU cores, and total RAM
-- **Working directory**: Current path in green
-
----
-
-## Requirements
-
-To fully utilize these dotfiles, the following tools are recommended/required:
-
-- **Shell**: `bash`, `rsync`, `colordiff`, `yamllint`
-- **Tmux**: `tmux` (v2.1+)
-- **Optional**: `starship` (modern cross-shell prompt, auto-installed via script)
-
-### Starship Requirements
-
-If you choose to use Starship (offered during installation):
-- **Font**: A [Nerd Font](https://www.nerdfonts.com/) for full icon support (e.g., FiraCode Nerd Font, JetBrainsMono Nerd Font)
-- **Compatibility**: Works on Linux, macOS, and Windows (via WSL)
+- **Bash**: Modular configuration (aliases, exports, wrappers) with a robust custom prompt.
+- **Tmux**: Streamlined status bar and shortcuts.
+- **Starship**: Optional, high-performance cross-shell prompt. Easily toggleable.
+- **WezTerm**: GPU-accelerated terminal emulator configuration.
+- **Ripgrep**: Custom ignore rules for better performance.
+- **Management Utility**: A single script (`manage.sh`) to handle installation, updates, and maintenance.
 
 ## Installation
 
-```bash
-cd ~
-git clone https://github.com/arrfour/dotfiles.git
+1. Clone the repository:
 
-cd dotfiles
-```
+    ```bash
+    git clone https://github.com/arrfour/dotfiles.git
+    cd dotfiles
+    ```
 
-### Run install
+2. Run the installer:
 
-```bash
-./install.sh
-```
+    ```bash
+    ./manage.sh install
+    ```
 
-## Notes
+    - The script will back up existing files to `*.dtbak` before overwriting.
+    - You will be prompted to install/configure Starship.
 
-- Ripgrep ignore rules are included to avoid runaway scans on large folders
-  (cache directories, container/flatpak storage, and GoogleDrive), which can
-  spike CPU usage when file searches recurse through the home directory.
+## Usage
 
-## Updating
-
-To pull the latest changes and refresh your configurations:
+All management is handled via `manage.sh`.
 
 ```bash
-./update.sh
+./manage.sh [command] [options]
 ```
 
-## Starship Prompt (Optional)
+### Commands
 
-[Starship](https://starship.rs/) is a minimal, blazing-fast, and infinitely customizable cross-shell prompt written in Rust.
+| Command | Description |
+| :--- | :--- |
+| `install` | Symlinks dotfiles to your home directory. |
+| `uninstall` | Removes symlinks and restores backups. |
+| `update` | Pulls the latest changes from Git and re-runs install. |
+| `status` | Checks the health of symlinks, WezTerm, and Starship. |
+| `toggle-starship` | Enables or disables the Starship prompt without uninstalling. |
+| `help` | Shows the help menu. |
 
-### Features
+### Options
 
-- **Fast**: Renders in under 5ms, even in large Git repositories
-- **Cross-platform**: Same configuration works on Linux, macOS, and Windows
-- **Rich context**: Shows Git status, programming language versions, AWS/Kubernetes context, and more
-- **Easy configuration**: Single TOML file for all settings
+- `-n`, `--dry-run`: Show what would happen without making changes.
+- `-f`, `--force`: Skip confirmation prompts.
 
-### Installation
+## Starship Prompt
 
-Starship is offered as an optional component during `./install.sh`. Simply answer "y" when prompted.
+[Starship](https://starship.rs) is an optional prompt that can be toggled on/off.
 
-### Manual Installation
+- **Enable/Disable**: `./manage.sh toggle-starship`
+- **Check Status**: `./manage.sh status`
 
-```bash
-# Install Starship
-curl -sS https://starship.rs/install.sh | sh
-
-# The install script will automatically:
-# - Install the starship binary
-# - Link the configuration file
-# - Add initialization to .bashrc
-```
-
-### Switching Between Prompts
-
-Use the update script to switch between your custom PS1 and Starship:
-
-```bash
-./update.sh
-```
-
-This will show a menu allowing you to:
-- Convert to Starship (install and enable)
-- Revert to custom PS1 (disable Starship)
-
-### Configuration
-
-The Starship configuration is located at `~/.config/starship.toml`. The default configuration mimics your custom PS1 structure while adding Git and language support.
-
-**Key differences from custom PS1:**
-- Git branch and status shown automatically in Git repositories
-- Programming language versions (Python, Node.js, Rust, Go) when in project directories
-- AWS profile and Kubernetes context (if enabled)
-- Asynchronous rendering - no prompt lag
-
-### Uninstallation
-
-To remove Starship configuration while keeping the binary:
-
-```bash
-./manage.sh status  # Check current prompt status
-./update.sh         # Select "Revert to custom PS1"
-```
-
-To completely remove the Starship binary:
-
-```bash
-rm ~/.local/bin/starship  # or wherever it was installed
-```
-
----
-
-## Uninstallation
-
-### Change to dotfiles folder
-
-```bash
-cd ~/dotfiles
-```
-
-### Run uninstaller
-
-```bash
-./uninstall.sh
-```
-
-## Changelog
-
-### Major Changes
-
-- **Removed Vim configuration**: The project no longer manages Vim/Neovim configuration files.
-- **Added Starship support**: Optional modern cross-shell prompt with PS1/Starship conversion via update script.
-- **Enhanced update script**: Now offers prompt configuration switching between custom PS1 and Starship.
-
-### Security Fixes
-
-- Removed `alias _='sudo'` from `.bashrc`.
-- Added strict file allowlist to `install.sh` and `uninstall.sh`.
-- Added pre-commit hook to block secrets.
-
-### Improvements
-
-- `install.sh` now supports `-n` (dry-run) and `-f` (force).
-- Added safety prompts before overwriting files.
-- Added backup creation (`.dtbak`) for existing files.
-- Added Starship installation option with automatic .bashrc configuration.
+The configuration is linked to `~/.config/starship.toml`.
