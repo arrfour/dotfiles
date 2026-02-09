@@ -1,15 +1,25 @@
 # Starship Configuration
-# Clean, informative prompt with system info
+# Option C: Clean left side, contextual info on right
+# Optimized for: JavaScript, Python, Ansible, Terraform, AWS, Azure, Docker
 
+# Two-line layout:
+# Line 1: Essential navigation (user, host, system, directory, git)
+# Line 2: Contextual info (languages, cloud, duration) + prompt
 format = """
-[┌──](red)$status$username$hostname$custom$directory$git_branch$git_status$git_state$line_break[└──╼](red) $character"""
+[┌──](red)$status$username$hostname$custom$directory$git_branch$git_status$git_state
+[│](red) $cmd_duration$python$nodejs$aws$azure$docker_context$line_break[└──╼](red) $character"""
 
-# Global settings
+# Global Performance Settings
 add_newline = false
 scan_timeout = 30
-command_timeout = 2000
+command_timeout = 500
+follow_symlinks = false
 
-# Username module
+# ============================================
+# LEFT SIDE - Essential Context
+# ============================================
+
+# Username - always show
 [username]
 style_user = "bold white"
 style_root = "bold red"
@@ -17,13 +27,13 @@ format = "[$user]($style)"
 disabled = false
 show_always = true
 
-# Hostname module
+# Hostname
 [hostname]
 ssh_only = false
 format = "[@$hostname](bold yellow)"
 disabled = false
 
-# Custom system info module
+# Custom system info module (distro, kernel, CPU, memory)
 [custom.system_info]
 command = "$HOME/.config/system_info.sh"
 format = "[─](yellow)[$output](bold cyan)"
@@ -31,7 +41,7 @@ when = true
 description = "System information"
 disabled = false
 
-# Directory module
+# Directory with smart truncation
 [directory]
 truncation_length = 3
 truncate_to_repo = true
@@ -39,14 +49,14 @@ format = "[─$path](bold green)"
 truncation_symbol = "…/"
 home_symbol = "~"
 
-# Git branch module
+# Git branch
 [git_branch]
 symbol = ""
 format = " [on $branch](bold purple)"
 truncation_length = 20
 truncation_symbol = "…"
 
-# Git status module
+# Git status - show all the important states
 [git_status]
 format = "([$all_status$ahead_behind]($style))"
 style = "bold purple"
@@ -60,7 +70,7 @@ staged = "+${count}"
 renamed = "»${count}"
 deleted = "✘${count}"
 
-# Git state module
+# Git state - rebase, merge, etc.
 [git_state]
 format = "[$state( $progress_current/$progress_total)](bold red) "
 rebase = "REBASING"
@@ -69,7 +79,7 @@ revert = "REVERTING"
 cherry_pick = "CHERRY-PICKING"
 bisect = "BISECTING"
 
-# Status module (exit code indicator)
+# Status - exit code indicator
 [status]
 symbol = "[✗](bold red)"
 success_symbol = ""
@@ -77,37 +87,91 @@ format = "$symbol "
 map_symbol = true
 disabled = false
 
-# Character module (prompt symbol)
+# Character - prompt symbol
 [character]
 success_symbol = "[➜](bold green)"
 error_symbol = "[✗](bold red)"
 
-# Disable unnecessary modules for cleaner prompt
-[package]
-disabled = true
+# ============================================
+# RIGHT SIDE - Contextual Info
+# ============================================
 
-[nodejs]
-disabled = true
+# Command duration - shows for commands > 2 seconds
+[cmd_duration]
+min_time = 2000
+format = "[took $duration](bold yellow) "
+disabled = false
+show_milliseconds = false
 
+# Python - shows version and virtualenv
 [python]
+python_binary = "python3"
+format = "[🐍 $virtualenv](bold yellow)[ $version](bold blue) "
+symbol = "🐍"
+detect_extensions = ["py"]
+detect_files = ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
+disabled = false
+
+# Node.js - shows version
+[nodejs]
+format = "[⬢ $version](bold green) "
+symbol = "⬢"
+detect_extensions = ["js", "mjs", "cjs", "ts"]
+detect_files = ["package.json", ".node-version"]
+detect_folders = ["node_modules"]
+disabled = false
+
+# AWS - shows profile and region
+[aws]
+format = "[☁️ $profile($region)](bold yellow) "
+symbol = "☁️"
+style = "bold yellow"
+region_aliases = { us-east-1 = "us-east", us-west-2 = "us-west", eu-west-1 = "eu-west" }
+disabled = false
+
+# Azure - shows subscription
+[azure]
+format = "[☁️ $subscription](bold blue) "
+symbol = "☁️"
+style = "bold blue"
+disabled = false
+
+# Docker context
+[docker_context]
+format = "[🐋 $context](bold blue) "
+symbol = "🐋"
+disabled = false
+
+# ============================================
+# DISABLED MODULES (for performance)
+# ============================================
+
+# Languages you don't use regularly
+[rust]
 disabled = true
 
 [ruby]
 disabled = true
 
-[rust]
-disabled = true
-
 [golang]
 disabled = true
 
-[docker_context]
+[java]
 disabled = true
 
-[kubernetes]
+# Other cloud providers (not using)
+[gcloud]
 disabled = true
 
-[aws]
+[openstack]
+disabled = true
+
+# Infrastructure tools (not detected automatically)
+# Note: Terraform and Ansible don't have built-in modules in Starship
+# They could be added as custom modules if needed
+
+# Utilities
+[package]
 disabled = true
 
 [battery]
@@ -116,5 +180,17 @@ disabled = true
 [time]
 disabled = true
 
-[cmd_duration]
+[jobs]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[container]
+disabled = true
+
+[nix_shell]
+disabled = true
+
+[conda]
 disabled = true
