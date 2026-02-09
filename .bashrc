@@ -159,3 +159,6 @@ else
     # Unobtrusive indicator: Dimmed text
     echo -e "\e[2m[!] Homebrew not found at standard locations\e[0m"
 fi
+
+# Initialize Starship prompt
+eval "$(starship init bash)"

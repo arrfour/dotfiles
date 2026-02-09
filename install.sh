@@ -11,8 +11,10 @@ FILES_TO_LINK=(
     ".bashrc"
     ".screenrc"
     ".tmux.conf"
-    ".vimrc"
 )
+
+# Optional: Starship prompt configuration
+STARSHIP_CONFIG=".config/starship.toml"
 
 # Config directories to handle separately
 CONFIG_DIRS=(
@@ -152,6 +154,145 @@ link_config_dir() {
     fi
 }
 
+install_starship() {
+    log "Installing Starship prompt..."
+    
+    if command -v starship &> /dev/null; then
+        success "Starship is already installed"
+    else
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would install Starship via official install script"
+        else
+            log "Installing Starship..."
+            curl -sS https://starship.rs/install.sh | sh -s -- -y
+            if [ $? -eq 0 ]; then
+                success "Starship installed successfully"
+            else
+                error "Failed to install Starship"
+                return 1
+            fi
+        fi
+    fi
+    
+    # Check if starship config should be linked
+    local starship_source="$PWD/$STARSHIP_CONFIG"
+    local starship_target="$HOME/$STARSHIP_CONFIG"
+    
+    if [ -f "$starship_source" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would link Starship config: $starship_source -> $starship_target"
+        else
+            # Backup existing config if present
+            if [ -f "$starship_target" ] && [ ! -L "$starship_target" ]; then
+                mv -f "$starship_target" "${starship_target}.dtbak"
+                success "Backed up existing Starship config"
+            fi
+            
+            # Create parent directory if needed
+            mkdir -p "$(dirname "$starship_target")"
+            
+            # Remove existing symlink if present
+            if [ -L "$starship_target" ]; then
+                rm -f "$starship_target"
+            fi
+            
+            ln -s "$starship_source" "$starship_target"
+            success "Linked Starship config"
+        fi
+    else
+        warn "Starship config not found at $STARSHIP_CONFIG. Skipping config link."
+    fi
+    
+    # Link system_info.sh helper script
+    local system_info_source="$PWD/.config/system_info.sh"
+    local system_info_target="$HOME/.config/system_info.sh"
+    
+    if [ -f "$system_info_source" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would link system_info.sh: $system_info_source -> $system_info_target"
+        else
+            if [ -f "$system_info_target" ] && [ ! -L "$system_info_target" ]; then
+                mv -f "$system_info_target" "${system_info_target}.dtbak"
+                success "Backed up existing system_info.sh"
+            fi
+            
+            if [ -L "$system_info_target" ]; then
+                rm -f "$system_info_target"
+            fi
+            
+            ln -s "$system_info_source" "$system_info_target"
+            success "Linked system_info.sh"
+        fi
+    fi
+    
+    # Add starship init to .bashrc if not present
+    local bashrc="$HOME/.bashrc"
+    if [ -f "$bashrc" ]; then
+        if ! grep -q "starship init bash" "$bashrc"; then
+            if [ "$DRY_RUN" = true ]; then
+                log "[DRY-RUN] Would add Starship initialization to .bashrc"
+            else
+                echo "" >> "$bashrc"
+                echo "# Initialize Starship prompt" >> "$bashrc"
+                echo 'eval "$(starship init bash)"' >> "$bashrc"
+                success "Added Starship initialization to .bashrc"
+            fi
+        else
+            success "Starship initialization already present in .bashrc"
+        fi
+    fi
+    
+    log ""
+    log "NOTE: Starship requires a Nerd Font for full functionality."
+    log "Install one from: https://www.nerdfonts.com/"
+    log ""
+}
+
+uninstall_starship() {
+    log "Removing Starship..."
+    
+    # Remove starship init from .bashrc
+    local bashrc="$HOME/.bashrc"
+    if [ -f "$bashrc" ]; then
+        if grep -q "starship init bash" "$bashrc"; then
+            if [ "$DRY_RUN" = true ]; then
+                log "[DRY-RUN] Would remove Starship initialization from .bashrc"
+            else
+                # Create a backup and remove starship lines
+                sed -i '/# Initialize Starship prompt/d' "$bashrc"
+                sed -i '/starship init bash/d' "$bashrc"
+                success "Removed Starship initialization from .bashrc"
+            fi
+        fi
+    fi
+    
+    # Remove starship config symlink
+    local starship_target="$HOME/$STARSHIP_CONFIG"
+    if [ -L "$starship_target" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would remove Starship config symlink"
+        else
+            rm -f "$starship_target"
+            success "Removed Starship config symlink"
+        fi
+    fi
+    
+    # Remove system_info.sh symlink
+    local system_info_target="$HOME/.config/system_info.sh"
+    if [ -L "$system_info_target" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would remove system_info.sh symlink"
+        else
+            rm -f "$system_info_target"
+            success "Removed system_info.sh symlink"
+        fi
+    fi
+    
+    # Note: We don't uninstall the starship binary itself - user can do that manually
+    log "Starship configuration removed. Binary remains installed."
+    log "To remove the binary: rm ~/.local/bin/starship (or your install location)"
+}
+
 # Main Execution
 log "Starting installation..."
 if [ "$DRY_RUN" = true ]; then
@@ -166,4 +307,18 @@ for dir in "${CONFIG_DIRS[@]}"; do
     link_config_dir "$dir"
 done
 
-log "Installation complete."
+# Prompt for Starship installation
+log ""
+log "${YELLOW}--- Optional Components ---${NC}"
+if prompt_confirm "Would you like to install Starship (modern cross-shell prompt)?"; then
+    install_starship
+else
+    log "Skipping Starship installation."
+fi
+
+log ""
+success "Installation complete."
+log ""
+log "Next steps:"
+log "  - Restart your terminal or run: source ~/.bashrc"
+log "  - If you installed Starship, install a Nerd Font from: https://www.nerdfonts.com/"

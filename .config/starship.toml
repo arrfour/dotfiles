@@ -1,0 +1,120 @@
+# Starship Configuration
+# Clean, informative prompt with system info
+
+format = """
+[┌──](red)$status$username$hostname$custom$directory$git_branch$git_status$git_state$line_break[└──╼](red) $character"""
+
+# Global settings
+add_newline = false
+scan_timeout = 30
+command_timeout = 2000
+
+# Username module
+[username]
+style_user = "bold white"
+style_root = "bold red"
+format = "[$user]($style)"
+disabled = false
+show_always = true
+
+# Hostname module
+[hostname]
+ssh_only = false
+format = "[@$hostname](bold yellow)"
+disabled = false
+
+# Custom system info module
+[custom.system_info]
+command = "$HOME/.config/system_info.sh"
+format = "[─](yellow)[$output](bold cyan)"
+when = true
+description = "System information"
+disabled = false
+
+# Directory module
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+format = "[─$path](bold green)"
+truncation_symbol = "…/"
+home_symbol = "~"
+
+# Git branch module
+[git_branch]
+symbol = ""
+format = " [on $branch](bold purple)"
+truncation_length = 20
+truncation_symbol = "…"
+
+# Git status module
+[git_status]
+format = "([$all_status$ahead_behind]($style))"
+style = "bold purple"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕"
+untracked = "?${count}"
+stashed = "⚑${count}"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+# Git state module
+[git_state]
+format = "[$state( $progress_current/$progress_total)](bold red) "
+rebase = "REBASING"
+merge = "MERGING"
+revert = "REVERTING"
+cherry_pick = "CHERRY-PICKING"
+bisect = "BISECTING"
+
+# Status module (exit code indicator)
+[status]
+symbol = "[✗](bold red)"
+success_symbol = ""
+format = "$symbol "
+map_symbol = true
+disabled = false
+
+# Character module (prompt symbol)
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red)"
+
+# Disable unnecessary modules for cleaner prompt
+[package]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[python]
+disabled = true
+
+[ruby]
+disabled = true
+
+[rust]
+disabled = true
+
+[golang]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[aws]
+disabled = true
+
+[battery]
+disabled = true
+
+[time]
+disabled = true
+
+[cmd_duration]
+disabled = true

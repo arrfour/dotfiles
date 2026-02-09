@@ -9,7 +9,6 @@ FILES_TO_LINK=(
     ".bashrc"
     ".screenrc"
     ".tmux.conf"
-    ".vimrc"
 )
 
 CONFIG_DIRS=(

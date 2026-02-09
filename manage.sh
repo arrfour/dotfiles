@@ -16,17 +16,17 @@ print_status() {
     echo -e "${BLUE}--- System Status ---${NC}"
     
     # Check WezTerm Flatpak
-    if flatpak list | grep -q "org.wezfurlong.wezterm"; then
+    if flatpak list | grep -q "org.wezfurlong.wezterm" 2>/dev/null; then
         echo -e "WezTerm Flatpak:  ${GREEN}Installed${NC}"
     else
-        echo -e "WezTerm Flatpak:  ${RED}Not Found${NC}"
+        echo -e "WezTerm Flatpak:  ${YELLOW}Not Found${NC}"
     fi
 
     # Check Symlinks
     if [ -h "$HOME/.config/wezterm" ]; then
         echo -e "WezTerm Config:   ${GREEN}Linked${NC}"
     else
-        echo -e "WezTerm Config:   ${RED}Missing Link${NC}"
+        echo -e "WezTerm Config:   ${YELLOW}Missing Link${NC}"
     fi
 
     # Check KDE Default
@@ -41,7 +41,41 @@ print_status() {
     if [[ "$TERMINAL" == *"wezterm"* ]]; then
         echo -e "Env Variable:     ${GREEN}Set ($TERMINAL)${NC}"
     else
-        echo -e "Env Variable:     ${RED}Not found in current session${NC}"
+        echo -e "Env Variable:     ${YELLOW}Not found in current session${NC}"
+    fi
+    
+    echo ""
+    echo -e "${BLUE}--- Prompt Status ---${NC}"
+    
+    # Check Starship
+    if command -v starship &> /dev/null; then
+        STARSHIP_VERSION=$(starship --version | head -n1)
+        echo -e "Starship:         ${GREEN}Installed ($STARSHIP_VERSION)${NC}"
+    else
+        echo -e "Starship:         ${YELLOW}Not Installed${NC}"
+    fi
+    
+    # Check Starship config
+    if [ -h "$HOME/.config/starship.toml" ]; then
+        echo -e "Starship Config:  ${GREEN}Linked${NC}"
+    elif [ -f "$HOME/.config/starship.toml" ]; then
+        echo -e "Starship Config:  ${YELLOW}File exists (not symlinked)${NC}"
+    else
+        echo -e "Starship Config:  ${YELLOW}Not Found${NC}"
+    fi
+    
+    # Check if Starship is active
+    if [ -f "$HOME/.bashrc" ] && grep -q "starship init bash" "$HOME/.bashrc"; then
+        echo -e "Starship Active:  ${GREEN}Yes${NC}"
+    else
+        echo -e "Starship Active:  ${YELLOW}No${NC}"
+    fi
+    
+    # Check Custom PS1
+    if [ -f "$HOME/.bashrc" ] && grep -q "PROMPT_SYS_INFO" "$HOME/.bashrc"; then
+        echo -e "Custom PS1:       ${GREEN}Present${NC}"
+    else
+        echo -e "Custom PS1:       ${YELLOW}Not Found${NC}"
     fi
 }
 
