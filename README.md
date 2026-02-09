@@ -1,87 +1,63 @@
 # dotfiles
 
-## TL;DR
+Managed configuration files for Bash, Tmux, WezTerm, and more.
 
-Customized configuration files for Bash, Vim, and Tmux.
+## Features
 
-- **Bash**: Modularized with separate aliases, exports, and wrappers. Colored man pages and enhanced prompt.
-- **Vim**: Plugin-ready with Pathogen, pre-configured for NERDTree, Airline, and DevOps tools (Ansible/Terraform).
-- **Tmux**: Streamlined status bar with network/VPN info and pane-resize shortcuts.
-
-### Prompt Preview
-
-The new prompt is multiline, color-coded, and includes dynamic status indicators:
-
-```text
-┌──[user@hostname]─[~/Projects/dotfiles]
-└──╼ $ 
-```
-
-*(If a command fails, a red `[✗]` indicator appears in the top line.)*
-
----
-
-## Requirements
-
-To fully utilize these dotfiles, the following tools and plugins are recommended/required:
-
-- **Shell**: `bash`, `rsync`, `colordiff`, `yamllint`
-- **Vim**: `pathogen`, `NERDTree`, `vim-airline`, `ansible-vim`, `vim-hashicorp-terraform`
-- **Tmux**: `tmux` (v2.1+)
+- **Bash**: Modular configuration (aliases, exports, wrappers) with a robust custom prompt.
+- **Tmux**: Streamlined status bar and shortcuts.
+- **Starship**: Optional, high-performance cross-shell prompt. Easily toggleable.
+- **WezTerm**: GPU-accelerated terminal emulator configuration.
+- **Ripgrep**: Custom ignore rules for better performance.
+- **Management Utility**: A single script (`manage.sh`) to handle installation, updates, and maintenance.
 
 ## Installation
 
-```bash
-cd ~
-git clone https://github.com/arrfour/dotfiles.git
+1. Clone the repository:
 
-cd dotfiles
-```
+    ```bash
+    git clone https://github.com/arrfour/dotfiles.git
+    cd dotfiles
+    ```
 
-### Run install
+2. Run the installer:
 
-```bash
-./install.sh
-```
+    ```bash
+    ./manage.sh install
+    ```
 
-## Notes
+    - The script will back up existing files to `*.dtbak` before overwriting.
+    - You will be prompted to install/configure Starship.
 
-- Ripgrep ignore rules are included to avoid runaway scans on large folders
-  (cache directories, container/flatpak storage, and GoogleDrive), which can
-  spike CPU usage when file searches recurse through the home directory.
+## Usage
 
-## Updating
-
-To pull the latest changes and refresh your configurations:
+All management is handled via `manage.sh`.
 
 ```bash
-./update.sh
+./manage.sh [command] [options]
 ```
 
-## Uninstallation
+### Commands
 
-### Change to dotfiles folder
+| Command | Description |
+| :--- | :--- |
+| `install` | Symlinks dotfiles to your home directory. |
+| `uninstall` | Removes symlinks and restores backups. |
+| `update` | Pulls the latest changes from Git and re-runs install. |
+| `status` | Checks the health of symlinks, WezTerm, and Starship. |
+| `toggle-starship` | Enables or disables the Starship prompt without uninstalling. |
+| `help` | Shows the help menu. |
 
-```bash
-cd ~/dotfiles
-```
+### Options
 
-### Run uninstaller
+- `-n`, `--dry-run`: Show what would happen without making changes.
+- `-f`, `--force`: Skip confirmation prompts.
 
-```bash
-./uninstall.sh
-```
+## Starship Prompt
 
-## Changelog
+[Starship](https://starship.rs) is an optional prompt that can be toggled on/off.
 
-### Security Fixes
+- **Enable/Disable**: `./manage.sh toggle-starship`
+- **Check Status**: `./manage.sh status`
 
-- Removed `alias _='sudo'` from `.bashrc`.
-- Added strict file allowlist to `install.sh` and `uninstall.sh`.
-- Added pre-commit hook to block secrets.
-
-### Improvements
-
-- `install.sh` now supports `-n` (dry-run) and `-f` (force).
-- Added safety prompts before overwriting files.
-- Added backup creation (`.dtbak`) for existing files.
+The configuration is linked to `~/.config/starship.toml`.
