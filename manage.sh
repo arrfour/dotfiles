@@ -219,6 +219,25 @@ uninstall_starship() {
     log "Note: The Starship binary was NOT removed. Remove it manually if desired."
 }
 
+toggle_starship() {
+    if [ -f "$HOME/.config/starship_disabled" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would remove $HOME/.config/starship_disabled (enable Starship)"
+        else
+            rm "$HOME/.config/starship_disabled"
+            success "Starship enabled. Reload shell for changes."
+        fi
+    else
+        if [ "$DRY_RUN" = true ]; then
+            log "[DRY-RUN] Would create $HOME/.config/starship_disabled (disable Starship)"
+        else
+            mkdir -p "$HOME/.config"
+            touch "$HOME/.config/starship_disabled"
+            success "Starship disabled. Reload shell for changes."
+        fi
+    fi
+}
+
 # ==============================================================================
 # Core Logic: Repo Manager
 # ==============================================================================
@@ -289,6 +308,13 @@ print_status() {
         echo -e "Starship:         ${YELLOW}Not Installed${NC}"
     fi
     
+    # Check Disabled Status
+    if [ -f "$HOME/.config/starship_disabled" ]; then
+        echo -e "Starship Status:  ${YELLOW}Disabled (via config)${NC}"
+    else
+        echo -e "Starship Status:  ${GREEN}Enabled${NC}"
+    fi
+    
     # Check Starship config
     if [ -h "$HOME/.config/starship.toml" ]; then
         echo -e "Starship Config:  ${GREEN}Linked${NC}"
@@ -319,6 +345,7 @@ show_help() {
     echo -e "             Options: -n/--dry-run"
     echo -e "  ${GREEN}update${NC}    Pull latest changes and re-sync"
     echo -e "  ${GREEN}status${NC}    Check health of the installation"
+    echo -e "  ${GREEN}toggle-starship${NC} Enable/Disable Starship prompt"
     echo -e "  ${GREEN}help${NC}      Show this menu"
 }
 
@@ -362,6 +389,9 @@ case "$COMMAND" in
         ;;
     status)
         print_status
+        ;;
+    toggle-starship)
+        toggle_starship
         ;;
     *)
         show_help

@@ -161,7 +161,7 @@ else
 fi
 
 # Initialize Starship prompt
-# Initialize Starship prompt if installed
-if command -v starship &> /dev/null; then
+# Initialize Starship prompt if installed and not disabled
+if command -v starship &> /dev/null && [ ! -f "$HOME/.config/starship_disabled" ]; then
     eval "$(starship init bash)"
 fi
