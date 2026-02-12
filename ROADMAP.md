@@ -9,5 +9,5 @@
   - Add support for standard Homebrew paths (`/usr/local/bin`, `/opt/homebrew/bin`).
 - [ ] **General Features**
   - Implement secure configuration sync for non-secret dotfiles, ensuring secrets remain local, excluded by `.gitignore`, and protected both at rest and in transit.
-  - rudimentary default menu making manage.sh interactive, but without dropping any -- flag features either.
+  - [x] ***UI*** - rudimentary default menu making manage.sh interactive, but without dropping any -- flag features either.
   
