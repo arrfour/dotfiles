@@ -41,6 +41,7 @@ NC='\033[0m' # No Color
 # Flags
 DRY_RUN=false
 FORCE=false
+INTERACTIVE=false
 
 # ==============================================================================
 # Helpers
@@ -337,6 +338,8 @@ print_status() {
 show_help() {
     echo -e "${BLUE}Dotfiles Manager${NC}"
     echo -e "Usage: $0 [command] [options]"
+    echo -e "       $0 --interactive"
+    echo -e "       $0               (no args opens menu)"
     echo ""
     echo "Commands:"
     echo -e "  ${GREEN}install${NC}   Symlink dotfiles to home directory"
@@ -347,25 +350,73 @@ show_help() {
     echo -e "  ${GREEN}status${NC}    Check health of the installation"
     echo -e "  ${GREEN}toggle-starship${NC} Enable/Disable Starship prompt"
     echo -e "  ${GREEN}help${NC}      Show this menu"
+    echo ""
+    echo "Options:"
+    echo -e "  -i, --interactive  Open interactive menu"
+    echo -e "  -n, --dry-run      Run without making changes"
+    echo -e "  -f, --force        Skip confirmation prompts"
+}
+
+interactive_menu() {
+    echo -e "${BLUE}Dotfiles Manager${NC}"
+    echo ""
+    echo "1) install"
+    echo "2) uninstall"
+    echo "3) update"
+    echo "4) status"
+    echo "5) toggle-starship"
+    echo "6) help"
+    echo "7) quit"
+    echo ""
+
+    read -r -p "Select an option [1-7]: " choice
+    case "$choice" in
+        1) echo "install" ;;
+        2) echo "uninstall" ;;
+        3) echo "update" ;;
+        4) echo "status" ;;
+        5) echo "toggle-starship" ;;
+        6) echo "help" ;;
+        7) echo "" ;;
+        *) echo "" ;;
+    esac
 }
 
 # ==============================================================================
 # Main Execution
 # ==============================================================================
 
-# Parse Command
-COMMAND="$1"
-shift
+# Parse Args
+COMMAND=""
+if [ "$#" -eq 0 ]; then
+    INTERACTIVE=true
+fi
 
-# Parse Shared Flags
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -n|--dry-run) DRY_RUN=true ;;
         -f|--force) FORCE=true ;;
-        *) ;;
+        -i|--interactive) INTERACTIVE=true ;;
+        install|uninstall|update|status|toggle-starship|help)
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$1"
+            fi
+            ;;
+        *)
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$1"
+            fi
+            ;;
     esac
     shift
 done
+
+if [ "$INTERACTIVE" = true ]; then
+    COMMAND="$(interactive_menu)"
+    if [ -z "$COMMAND" ]; then
+        exit 0
+    fi
+fi
 
 case "$COMMAND" in
     install)

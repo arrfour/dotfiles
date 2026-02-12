@@ -2,6 +2,8 @@
 
 Managed configuration files for Bash, Tmux, WezTerm, and more.
 
+**Version:** 0.2.0
+
 ## Features
 
 - **Bash**: Modular configuration (aliases, exports, wrappers) with a robust custom prompt.
@@ -10,6 +12,7 @@ Managed configuration files for Bash, Tmux, WezTerm, and more.
 - **WezTerm**: GPU-accelerated terminal emulator configuration.
 - **Ripgrep**: Custom ignore rules for better performance.
 - **Management Utility**: A single script (`manage.sh`) to handle installation, updates, and maintenance.
+- **Interactive Mode**: Running `manage.sh` with no arguments opens a simple command menu.
 
 ## Installation
 
@@ -35,7 +38,11 @@ All management is handled via `manage.sh`.
 
 ```bash
 ./manage.sh [command] [options]
+./manage.sh --interactive
+./manage.sh
 ```
+
+If no command is provided, `manage.sh` opens an interactive menu.
 
 ### Commands
 
@@ -52,6 +59,7 @@ All management is handled via `manage.sh`.
 
 - `-n`, `--dry-run`: Show what would happen without making changes.
 - `-f`, `--force`: Skip confirmation prompts.
+- `-i`, `--interactive`: Open the interactive command menu.
 
 ## Starship Prompt
 
