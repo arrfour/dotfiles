@@ -371,14 +371,14 @@ interactive_menu() {
 
     read -r -p "Select an option [1-7]: " choice
     case "$choice" in
-        1) echo "install" ;;
-        2) echo "uninstall" ;;
-        3) echo "update" ;;
-        4) echo "status" ;;
-        5) echo "toggle-starship" ;;
-        6) echo "help" ;;
-        7) echo "" ;;
-        *) echo "" ;;
+        1) COMMAND="install" ;;
+        2) COMMAND="uninstall" ;;
+        3) COMMAND="update" ;;
+        4) COMMAND="status" ;;
+        5) COMMAND="toggle-starship" ;;
+        6) COMMAND="help" ;;
+        7) COMMAND="" ;;
+        *) COMMAND="" ;;
     esac
 }
 
@@ -412,7 +412,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ "$INTERACTIVE" = true ]; then
-    COMMAND="$(interactive_menu)"
+    interactive_menu
     if [ -z "$COMMAND" ]; then
         exit 0
     fi
