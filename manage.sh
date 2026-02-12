@@ -25,6 +25,7 @@ FILES_TO_LINK=(
 CONFIG_DIRS=(
     "ripgrep"
     "wezterm"
+    "powershell"
 )
 
 # Optional components

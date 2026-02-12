@@ -1,61 +1,57 @@
 # AGENTS.md - AI Coding Guidelines for Dotfiles Repository
 
+**Table of Contents:**
+- [Project Overview](#project-overview)
+- [Validation Workflow](#validation-workflow)
+- [Code Style Guidelines](#code-style-guidelines)
+- [Architecture Rules](#architecture-rules)
+- [Prompt Systems](#prompt-systems)
+- [Platform Support](#platform-support)
+- [Security & Hooks](#security--hooks)
+- [Common Tasks](#common-tasks)
+- [Testing Checklist](#testing-checklist)
+
 ## Project Overview
 
 This is a **dotfiles management repository** providing Bash shell configurations, Tmux settings, and optional Starship prompt integration. The project uses a **symlink-based architecture** where files in `~/dotfiles/` are symlinked to `~/`.
 
-## Build, Lint, and Test Commands
+## Validation Workflow
 
-### Linting
+This project uses **pre-commit** for automated code validation. Catches errors before commits.  
+**Install once**: `pip install pre-commit && pre-commit install`  
+**Validates**: Shell syntax (shellcheck), YAML/TOML config, s***ets detection, file formatting
+
+### Local Validation (Before Commit)
 
 ```bash
-# Lint all shell scripts
-shellcheck *.sh .config/*.sh
+# Run all checks on staged files (automatic on git commit, or manual):
+pre-commit run --all-files
 
-# Lint specific file
-shellcheck manage.sh
+# Run specific hook:
+pre-commit run shellcheck --all-files
 
-# Lint with severity filter
-shellcheck --severity=warning manage.sh
+# Bypass if false positive (NOT recommended):
+git commit --no-verify
 ```
 
-### Testing
-
-This project has **no automated test suite**. Testing is manual:
+### Manual Testing (Development)
 
 ```bash
-# Check installation status
+# Check installation status:
 ./manage.sh status
 
-# Test symlink creation (dry-run)
+# Test symlink creation (dry-run):
 ./manage.sh install -n
 
-# Verify specific file is linked
-ls -la ~/.bashrc  # Should show symlink to dotfiles
+# Source and test bash modules:
+source ~/.bash_aliases
+source ~/.bash_exports
+bash -n ~/.bashrc  # Syntax check
 
-# Test Starship configuration
+# Test Starship (if installed):
 export STARSHIP_CONFIG=~/dotfiles/.config/starship.toml
 starship config validate
 starship prompt
-
-# Test in different directories
-cd /tmp && starship prompt
-cd ~/dotfiles && starship prompt
-```
-
-### Running Single Components
-
-```bash
-# Source specific configuration files
-source ~/.bash_aliases
-source ~/.bash_exports
-
-# Test bash configuration
-bash -n ~/.bashrc  # Syntax check only
-
-# Test manage.sh subcommands
-./manage.sh install -n  # Dry-run
-./manage.sh status
 ```
 
 ## Code Style Guidelines
@@ -164,6 +160,12 @@ command = """distro=$(grep ^ID= /etc/os-release); echo $distro"""
 - Support `-f` (force) flag  
 - Use confirmation prompts before destructive operations
 
+**Adding Config Directories**:
+1. Create directory under `.config/newdir/`
+2. Add `"newdir"` to `CONFIG_DIRS` array in `manage.sh`
+3. Update status check logic if special handling needed
+4. Document in README
+
 ## Prompt Systems
 
 This project supports **two prompt options**:
@@ -183,14 +185,51 @@ When modifying Starship:
 - Maintain `.config/starship.toml` and `.config/system_info.sh`
 - Ensure `manage.sh status` shows correct prompt state
 
-## Pre-commit Hook
+## Platform Support
 
-A security hook blocks commits containing:
-- Private keys (RSA, OpenSSH, PGP)
-- AWS access keys
-- Password/secret/api_key patterns
+### Current Status
 
-To bypass (if false positive): `git commit --no-verify`
+- **Linux**: ✅ Full support (primary target: Ubuntu 20.04+, Fedora 35+, Debian 11+)
+- **macOS**: 📋 In development (cross-platform system info queries implemented)
+- **PowerShell**: 📋 Planned (profile template at `.config/powershell/profile.ps1`)
+- **BSD**: 📋 Experimental (FreeBSD/OpenBSD system info adapted, untested)
+
+### Cross-Platform Pattern
+
+Use `uname -s` to detect OS and call platform-appropriate commands:
+
+```bash
+# Example: Cross-platform CPU count
+OS=$(uname -s)
+if [[ "$OS" == "Linux" ]]; then
+    cpu=$(nproc)
+elif [[ "$OS" == "Darwin" ]]; then
+    cpu=$(sysctl -n hw.ncpu)
+else
+    cpu="?"
+fi
+```
+
+**Applied locations**:
+- `.bashrc`: System info for prompt (lines ~58-84)
+- `.config/system_info.sh`: Helper script for system info display
+
+### Adding PowerShell Support
+
+1. Edit `.config/powershell/profile.ps1` to add aliases/exports
+2. Add to manage.sh `CONFIG_DIRS` array if not present
+3. Document in README platform support matrix
+4. Test on Windows Terminal: `$PROFILE` location varies
+
+### Pre-commit Hook (Implemented in `.git/hooks/pre-commit`)
+
+Blocks commits containing sensitive data:
+- Private keys: RSA, OpenSSH, PGP
+- AWS credentials: Access key ID, s***et keys
+- Generic s***ets: Patterns matching `password`, `s***et`, `api_key`
+
+**To bypass** (only if false positive): `git commit --no-verify`  
+**Best practice**: Use `.local` files for sensitive config (ignored via `.gitignore`)
 
 ## Git Workflow
 
@@ -221,9 +260,9 @@ To bypass (if false positive): `git commit --no-verify`
 ## Testing Checklist
 
 Before committing changes:
-- [ ] Run `shellcheck` on modified scripts
-- [ ] Test with `./manage.sh status`
-- [ ] Test dry-run: `./manage.sh install -n`
-- [ ] Verify symlinks created correctly
-- [ ] Test Starship config: `starship config validate`
-- [ ] Check pre-commit hook passes: `git commit` (will block if secrets found)
+- [ ] Auto-validation passes: `pre-commit run --all-files` (catches shellcheck, YAML, s***ets)
+- [ ] Manual test: `./manage.sh status` (check symlinks)
+- [ ] Dry-run test: `./manage.sh install -n` (safe verification)
+- [ ] Verify symlinks created: `ls -la ~/.bashrc` (should point to dotfiles)
+- [ ] Config validation: `starship config validate` (if Starship installed)
+- [ ] Git commit: `git commit -m "..."` (hooks run automatically, block on issues)

@@ -13,6 +13,16 @@ Managed configuration files for Bash, Tmux, WezTerm, and more.
 - **Ripgrep**: Custom ignore rules for better performance.
 - **Management Utility**: A single script (`manage.sh`) to handle installation, updates, and maintenance.
 - **Interactive Mode**: Running `manage.sh` with no arguments opens a simple command menu.
+- **Cross-Platform Ready**: Linux support fully tested; macOS/BSD and PowerShell profiles in development.
+
+## Platform Support
+
+| Platform | Status | Notes |
+| :--- | :--- | :--- |
+| **Linux** | ✅ Fully Supported | Ubuntu, Fedora, Debian, and derivatives. Bash 4.0+ required. |
+| **macOS** | 📋 In Development | System info queries adapted for macOS commands. Full integration planned. |
+| **PowerShell** | 📋 Planned | Windows Terminal profile template provided; aliases WIP. |
+| **BSD** | 📋 Experimental | Scripts updated for FreeBSD/OpenBSD systems; untested. |
 
 ## Installation
 

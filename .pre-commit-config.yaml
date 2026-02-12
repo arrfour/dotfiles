@@ -1,0 +1,86 @@
+# Pre-commit Hook Configuration
+# Runs automated validation on staged files before commits.
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Usage:
+#   # Manual run on all files:
+#   pre-commit run --all-files
+#
+#   # Automatic run on `git commit` (after install)
+#   git commit -m "message"
+#
+# To bypass (strongly discouraged):
+#   git commit --no-verify
+
+repos:
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: ['--severity=warning']
+        exclude: '^\.git'
+
+  # YAML validation (for Starship config)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # YAML syntax validation
+      - id: check-yaml
+        args: ['--unsafe']
+        files: '\.config/starship\.toml$'
+
+      # File ending normalization
+      - id: end-of-file-fixer
+      
+      # Trailing whitespace cleanup
+      - id: trailing-whitespace
+        exclude: 'VERSION'
+
+      # Mixed line ending detection
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+      # JSON validation
+      - id: check-json
+        files: '\.(json)$'
+
+      # TOML validation (if available)
+      - id: check-toml
+        exclude: 'VERSION'
+
+  # Credential detection (custom from our .git/hooks/pre-commit)
+  - repo: local
+    hooks:
+      - id: secrets-check
+        name: Secrets check
+        entry: bash -c 'test -x .git/hooks/pre-commit && .git/hooks/pre-commit || true'
+        language: system
+        stages: [commit]
+
+  # Forbid large files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+        exclude: '(\.lock|VERSION|\.binary)'
+
+  # Git specific checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+
+# Exclude patterns globally
+exclude: |
+  (?x)^(
+    \.git/|
+    \.venv/|
+    node_modules/|
+  )

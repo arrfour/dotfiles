@@ -1,9 +1,13 @@
 # Backups created by install/uninstall scripts
 *.dtbak
 
-# Editor temporary files
-*.swp
-*~
+# Local overrides (not tracked; safe for sensitive config)
+*.local
+.gitignore_local
+
+# Secrets files (for users who split credentials)
+*.secret.*
+
 .vscode/
 
 # OS generated files

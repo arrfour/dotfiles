@@ -17,10 +17,6 @@ fi
 
 export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/share/games:/usr/local/sbin:/usr/sbin:/sbin:~/.local/bin
 
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
-
 # append to the history file, don't overwrite it
 shopt -s histappend
 
@@ -54,11 +50,32 @@ esac
 # should be on the output of commands, not on the prompt
 force_color_prompt=yes
 
-# System info for prompt
+# System info for prompt (cross-platform).
+# Uses uname to detect OS and call appropriate system info commands.
+__prompt_os=$(uname -s)
 __prompt_kernel=$(uname -r | cut -d'-' -f1)
-__prompt_distro=$(grep ^ID= /etc/os-release | cut -d= -f2 | tr -d '"' 2>/dev/null || echo "linux")
-__prompt_cpu=$(nproc)
-__prompt_mem=$(free -h | awk '/^Mem:/ {print $2}')
+
+if [[ "$__prompt_os" == "Linux" ]]; then
+    __prompt_distro=$(grep ^ID= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "linux")
+    __prompt_cpu=$(nproc 2>/dev/null || echo "?")
+    __prompt_mem=$(free -h 2>/dev/null | awk '/^Mem:/ {print $2}' || echo "?")
+elif [[ "$__prompt_os" == "Darwin" ]]; then
+    # macOS
+    __prompt_distro="macOS"
+    __prompt_cpu=$(sysctl -n hw.ncpu 2>/dev/null || echo "?")
+    __prompt_mem=$(vm_stat 2>/dev/null | grep "Pages free" | awk '{printf "%.1fG", int($3 * 4096 / 1073741824)}' || echo "?")
+elif [[ "$__prompt_os" == "FreeBSD" ]] || [[ "$__prompt_os" == "OpenBSD" ]]; then
+    # BSD systems
+    __prompt_distro="${__prompt_os}"
+    __prompt_cpu=$(sysctl -n hw.ncpu 2>/dev/null || echo "?")
+    __prompt_mem=$(free -m 2>/dev/null | awk '/^Mem:/ {print $2 "M"}' || echo "?")
+else
+    # Fallback for unknown OS
+    __prompt_distro="unknown"
+    __prompt_cpu="?"
+    __prompt_mem="?"
+fi
+
 PROMPT_SYS_INFO="${__prompt_distro} ${__prompt_kernel} | ${__prompt_cpu}C | ${__prompt_mem}"
 
 if [ -n "$force_color_prompt" ]; then

@@ -8,28 +8,12 @@ alias yams='find . -type f -name "*.yml*" | sed "s|\./||g" | egrep -v "(\.kitche
 alias glog='git log --oneline --graph --color --all --decorate'
 # alias ll='ls -alh' (currently defined in .bashrc)
 alias pip-upgrade="pip freeze --user | cut -d'=' -f1 | xargs -n1 pip install -U"
-# add aliases below - this is a comment to test git commits
 alias lt='ls --human-readable --size -1 -S --classify'
 alias mnt="mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort"
 alias cpv='rsync -ah --info=progress2'
-# Docker to Podman aliases : uncomment to use
+
+# Container runtimes: Uncomment the ones you use.
+# Docker to Podman aliases for systems using Podman instead of Docker:
 #alias docker='podman'
 #alias docker-compose='podman compose'
-#alias docker-buildx='podman buildx'
-#alias docker-ctx='podman context'
-#alias docker-run='podman run'
-#alias docker-ps='podman ps'
-#alias docker-images='podman images'
-#alias docker-rm='podman rm'
-#alias docker-rmi='podman rmi'
-#alias docker-exec='podman exec'
-#alias docker-logs='podman logs'
-#alias docker-stop='podman stop'
-#alias docker-start='podman start'
-#alias docker-pull='podman pull'
-#alias docker-push='podman push'
-#alias docker-commit='podman commit'
-#alias docker-inspect='podman inspect'
-#alias docker-network='podman network'
-#alias docker-volume='podman volume'
-#alias docker-system='podman system'
+# Add more as needed: https://docs.podman.io/en/latest/
