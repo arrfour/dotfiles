@@ -22,7 +22,7 @@ config.default_prog = { get_default_shell() }
 
 -- Appearance & Behavior
 config.color_scheme = 'Builtin Solarized Dark'
-config.font = wezterm.font 'JetBrains Mono'
+config.font = wezterm.font 'RobotoMono Nerd Font'
 config.font_size = 11.0
 config.hide_tab_bar_if_only_one_tab = true
 config.scrollback_lines = 5000
