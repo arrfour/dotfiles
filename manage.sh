@@ -28,8 +28,13 @@ CONFIG_DIRS=(
 )
 
 # Optional components
-STARSHIP_CONFIG=".config/starship.toml"
+STARSHIP_CONFIG_DEFAULT=".config/starship.toml"
+STARSHIP_CONFIG_HOST=".config/starship.host.toml"
+STARSHIP_TARGET_CONFIG=".config/starship.toml"
+STARSHIP_VARIANT_FILE=".config/starship_variant"
 SYSTEM_INFO_SCRIPT=".config/system_info.sh"
+POWERSHELL_BLOCK_START="# >>> dotfiles starship >>>"
+POWERSHELL_BLOCK_END="# <<< dotfiles starship <<<"
 
 # Colors
 RED='\033[0;31m'
@@ -118,11 +123,20 @@ link_item() {
     else
         mkdir -p "$(dirname "$target_path")"
         if [ -d "$source_path" ]; then
-             ln -snf "$source_path" "$target_path"
+             if ln -snf "$source_path" "$target_path"; then
+                 success "Linked $item_name"
+             else
+                 error "Failed to link $item_name"
+                 return 1
+             fi
         else
-             ln -s "$source_path" "$target_path"
+             if ln -s "$source_path" "$target_path"; then
+                 success "Linked $item_name"
+             else
+                 error "Failed to link $item_name"
+                 return 1
+             fi
         fi
-        success "Linked $item_name"
     fi
 }
 
@@ -179,12 +193,247 @@ uninstall_dotfiles() {
     done
 }
 
-# ==============================================================================
+# ============================================================================== 
 # Core Logic: Starship Manager
-# ==============================================================================
+# ============================================================================== 
+
+get_starship_variant() {
+    local variant_file="$HOME/$STARSHIP_VARIANT_FILE"
+
+    if [ -f "$variant_file" ]; then
+        local variant
+        variant="$(tr -d '[:space:]' < "$variant_file")"
+        if [ "$variant" = "host" ]; then
+            echo "host"
+            return
+        fi
+    fi
+
+    echo "default"
+}
+
+get_starship_source_config() {
+    local variant
+    variant="$(get_starship_variant)"
+
+    if [ "$variant" = "host" ] && [ -f "$PWD/$STARSHIP_CONFIG_HOST" ]; then
+        echo "$PWD/$STARSHIP_CONFIG_HOST"
+        return
+    fi
+
+    echo "$PWD/$STARSHIP_CONFIG_DEFAULT"
+}
+
+set_starship_variant() {
+    local requested_variant="$1"
+    local variant_file="$HOME/$STARSHIP_VARIANT_FILE"
+    local source_config
+
+    if [ "$requested_variant" != "default" ] && [ "$requested_variant" != "host" ]; then
+        error "Invalid variant '$requested_variant'. Use 'default' or 'host'."
+        return 1
+    fi
+
+    if [ "$requested_variant" = "host" ] && [ ! -f "$PWD/$STARSHIP_CONFIG_HOST" ]; then
+        error "Host variant config is missing at $PWD/$STARSHIP_CONFIG_HOST"
+        warn "Import one first with: ./manage.sh import-starship"
+        return 1
+    fi
+
+    source_config="$( [ "$requested_variant" = "host" ] && echo "$PWD/$STARSHIP_CONFIG_HOST" || echo "$PWD/$STARSHIP_CONFIG_DEFAULT" )"
+
+    if [ "$DRY_RUN" = true ]; then
+        log "[DRY-RUN] Would set Starship variant to '$requested_variant' in $variant_file"
+        log "[DRY-RUN] Would link $source_config -> $HOME/$STARSHIP_TARGET_CONFIG"
+        return 0
+    fi
+
+    mkdir -p "$HOME/.config"
+    printf "%s\n" "$requested_variant" > "$variant_file"
+    success "Starship variant set to '$requested_variant'"
+
+    link_item "$source_config" "$HOME/$STARSHIP_TARGET_CONFIG" "Starship Config"
+}
+
+import_host_starship_config() {
+    local host_config_path="$HOME/$STARSHIP_TARGET_CONFIG"
+    local repo_host_config_path="$PWD/$STARSHIP_CONFIG_HOST"
+
+    if [ ! -f "$host_config_path" ] && [ ! -L "$host_config_path" ]; then
+        error "No host Starship config found at $host_config_path"
+        return 1
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        if [ -e "$repo_host_config_path" ]; then
+            log "[DRY-RUN] Would backup $repo_host_config_path to ${repo_host_config_path}.dtbak"
+        fi
+        log "[DRY-RUN] Would copy $host_config_path -> $repo_host_config_path"
+        return 0
+    fi
+
+    if [ -e "$repo_host_config_path" ]; then
+        if prompt_confirm "Host variant already exists. Overwrite and backup?"; then
+            cp "$repo_host_config_path" "${repo_host_config_path}.dtbak"
+            success "Backed up $repo_host_config_path"
+        else
+            warn "Skipping import."
+            return 1
+        fi
+    fi
+
+    cp "$host_config_path" "$repo_host_config_path"
+    success "Imported host Starship config to $repo_host_config_path"
+    warn "This file is intended as a local alternative and is gitignored by default."
+}
+
+restore_backup_item() {
+    local requested_path="$1"
+    local target_path
+    local backup_path
+
+    if [ -z "$requested_path" ]; then
+        error "Missing restore target. Usage: ./manage.sh restore <home-relative-or-absolute-path>"
+        warn "Example: ./manage.sh restore .config/starship.toml"
+        return 1
+    fi
+
+    case "$requested_path" in
+        ~/*)
+            target_path="$HOME/${requested_path#~/}"
+            ;;
+        /*)
+            target_path="$requested_path"
+            ;;
+        *)
+            target_path="$HOME/$requested_path"
+            ;;
+    esac
+
+    backup_path="${target_path}.dtbak"
+
+    if [ ! -e "$backup_path" ]; then
+        error "Backup not found: $backup_path"
+        return 1
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        log "[DRY-RUN] Would restore $backup_path -> $target_path"
+        return 0
+    fi
+
+    if [ -e "$target_path" ] || [ -L "$target_path" ]; then
+        if ! prompt_confirm "Target exists at $target_path. Overwrite with backup?"; then
+            warn "Restore cancelled."
+            return 1
+        fi
+        if [ -d "$target_path" ] && [ ! -L "$target_path" ]; then
+            rm -rf "$target_path"
+        else
+            rm -f "$target_path"
+        fi
+    fi
+
+    mkdir -p "$(dirname "$target_path")"
+    mv -f "$backup_path" "$target_path"
+    success "Restored $target_path from backup"
+}
+
+get_pwsh_profile_path() {
+    if ! command -v pwsh &> /dev/null; then
+        return
+    fi
+
+    pwsh -NoProfile -Command '$PROFILE.CurrentUserCurrentHost' 2>/dev/null | tr -d '\r'
+}
+
+install_pwsh_starship_profile() {
+    local profile_path
+    local profile_dir
+    local managed_block
+
+    if ! command -v pwsh &> /dev/null; then
+        return
+    fi
+
+    profile_path="$(get_pwsh_profile_path)"
+    if [ -z "$profile_path" ]; then
+        warn "PowerShell 7 detected, but profile path could not be resolved."
+        return
+    fi
+
+    profile_dir="$(dirname "$profile_path")"
+    managed_block="$POWERSHELL_BLOCK_START
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    if (-not (Test-Path \"\$HOME/.config/starship_disabled\")) {
+        \$env:STARSHIP_CONFIG = \"\$HOME/.config/starship.toml\"
+        Invoke-Expression (&starship init powershell)
+    }
+}
+$POWERSHELL_BLOCK_END"
+
+    if [ "$DRY_RUN" = true ]; then
+        log "[DRY-RUN] Would ensure PowerShell profile exists at $profile_path"
+        if [ -f "$profile_path" ] && grep -Fq "$POWERSHELL_BLOCK_START" "$profile_path"; then
+            log "[DRY-RUN] PowerShell profile already contains managed Starship block"
+        else
+            log "[DRY-RUN] Would add managed Starship block to PowerShell profile"
+        fi
+        return
+    fi
+
+    mkdir -p "$profile_dir"
+    if [ ! -f "$profile_path" ]; then
+        touch "$profile_path"
+    fi
+
+    if grep -Fq "$POWERSHELL_BLOCK_START" "$profile_path"; then
+        success "PowerShell profile already has Starship integration"
+        return
+    fi
+
+    if [ -s "$profile_path" ] && [ ! -e "${profile_path}.dtbak" ]; then
+        cp "$profile_path" "${profile_path}.dtbak"
+        success "Backed up PowerShell profile to ${profile_path}.dtbak"
+    fi
+
+    printf "\n%s\n" "$managed_block" >> "$profile_path"
+    success "Configured Starship for PowerShell profile"
+}
+
+uninstall_pwsh_starship_profile() {
+    local profile_path
+
+    if ! command -v pwsh &> /dev/null; then
+        return
+    fi
+
+    profile_path="$(get_pwsh_profile_path)"
+    if [ -z "$profile_path" ] || [ ! -f "$profile_path" ]; then
+        return
+    fi
+
+    if ! grep -Fq "$POWERSHELL_BLOCK_START" "$profile_path"; then
+        return
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        log "[DRY-RUN] Would remove managed Starship block from $profile_path"
+        return
+    fi
+
+    awk -v start="$POWERSHELL_BLOCK_START" -v end="$POWERSHELL_BLOCK_END" '
+    $0 == start { skip = 1; next }
+    $0 == end { skip = 0; next }
+    skip == 0 { print }
+    ' "$profile_path" > "${profile_path}.tmp" && mv "${profile_path}.tmp" "$profile_path"
+
+    success "Removed managed Starship block from PowerShell profile"
+}
 
 install_starship() {
     log "Checking Starship..."
+    local starship_source_config
     
     if ! command -v starship &> /dev/null; then
         if [ "$DRY_RUN" = true ]; then
@@ -201,10 +450,14 @@ install_starship() {
     fi
 
     # Link Config
-    link_item "$PWD/$STARSHIP_CONFIG" "$HOME/$STARSHIP_CONFIG" "Starship Config"
+    starship_source_config="$(get_starship_source_config)"
+    link_item "$starship_source_config" "$HOME/$STARSHIP_TARGET_CONFIG" "Starship Config"
     
     # Link Helper Script
     link_item "$PWD/$SYSTEM_INFO_SCRIPT" "$HOME/$SYSTEM_INFO_SCRIPT" "System Info Script"
+
+    # Configure PowerShell profile for Starship when PowerShell 7 is available.
+    install_pwsh_starship_profile
 
     # Note on .bashrc:
     # We no longer modify .bashrc directly here because the user requested
@@ -213,8 +466,9 @@ install_starship() {
 }
 
 uninstall_starship() {
-    unlink_item "$HOME/$STARSHIP_CONFIG" "Starship Config"
+    unlink_item "$HOME/$STARSHIP_TARGET_CONFIG" "Starship Config"
     unlink_item "$HOME/$SYSTEM_INFO_SCRIPT" "System Info Script"
+    uninstall_pwsh_starship_profile
     
     log "Starship configuration removed." 
     log "Note: The Starship binary was NOT removed. Remove it manually if desired."
@@ -317,12 +571,24 @@ print_status() {
     fi
     
     # Check Starship config
-    if [ -h "$HOME/.config/starship.toml" ]; then
+    if [ -h "$HOME/$STARSHIP_TARGET_CONFIG" ]; then
         echo -e "Starship Config:  ${GREEN}Linked${NC}"
-    elif [ -f "$HOME/.config/starship.toml" ]; then
+    elif [ -f "$HOME/$STARSHIP_TARGET_CONFIG" ]; then
         echo -e "Starship Config:  ${YELLOW}File exists (not symlinked)${NC}"
     else
         echo -e "Starship Config:  ${YELLOW}Not Found${NC}"
+    fi
+
+    if [ "$(get_starship_variant)" = "host" ]; then
+        echo -e "Starship Variant: ${GREEN}Host${NC}"
+    else
+        echo -e "Starship Variant: ${GREEN}Default${NC}"
+    fi
+
+    if [ -f "$PWD/$STARSHIP_CONFIG_HOST" ]; then
+        echo -e "Host Variant:     ${GREEN}Available${NC}"
+    else
+        echo -e "Host Variant:     ${YELLOW}Not imported${NC}"
     fi
     
     # Check if Starship logic is present in bashrc
@@ -332,6 +598,24 @@ print_status() {
         echo -e "Bashrc Logic:     ${YELLOW}Legacy Init (Make conditional!)${NC}"
     else
         echo -e "Bashrc Logic:     ${YELLOW}Not Found${NC}"
+    fi
+
+    # Check PowerShell 7 profile integration when available.
+    if command -v pwsh &> /dev/null; then
+        local pwsh_profile
+        pwsh_profile="$(get_pwsh_profile_path)"
+
+        if [ -n "$pwsh_profile" ] && [ -f "$pwsh_profile" ]; then
+            if grep -Fq "$POWERSHELL_BLOCK_START" "$pwsh_profile"; then
+                echo -e "PowerShell 7:     ${GREEN}Managed Starship block present${NC}"
+            else
+                echo -e "PowerShell 7:     ${YELLOW}Profile found, Starship block missing${NC}"
+            fi
+        else
+            echo -e "PowerShell 7:     ${YELLOW}Not configured${NC}"
+        fi
+    else
+        echo -e "PowerShell 7:     ${YELLOW}Not installed${NC}"
     fi
 }
 
@@ -349,7 +633,12 @@ show_help() {
     echo -e "  ${GREEN}update${NC}    Pull latest changes and re-sync"
     echo -e "  ${GREEN}status${NC}    Check health of the installation"
     echo -e "  ${GREEN}toggle-starship${NC} Enable/Disable Starship prompt"
+    echo -e "  ${GREEN}import-starship${NC} Import current host Starship config as local variant"
+    echo -e "  ${GREEN}use-starship${NC} Select Starship variant (default|host)"
+    echo -e "  ${GREEN}restore${NC}   Restore one file from .dtbak backup"
     echo -e "  ${GREEN}help${NC}      Show this menu"
+    echo -e "             Example: ./manage.sh use-starship host"
+    echo -e "             Example: ./manage.sh restore .config/starship.toml"
     echo ""
     echo "Options:"
     echo -e "  -i, --interactive  Open interactive menu"
@@ -365,19 +654,27 @@ interactive_menu() {
     echo "3) update"
     echo "4) status"
     echo "5) toggle-starship"
-    echo "6) help"
-    echo "7) quit"
+    echo "6) import-starship"
+    echo "7) use-starship (default)"
+    echo "8) use-starship (host)"
+    echo "9) restore backup"
+    echo "10) help"
+    echo "11) quit"
     echo ""
 
-    read -r -p "Select an option [1-7]: " choice
+    read -r -p "Select an option [1-11]: " choice
     case "$choice" in
         1) COMMAND="install" ;;
         2) COMMAND="uninstall" ;;
         3) COMMAND="update" ;;
         4) COMMAND="status" ;;
         5) COMMAND="toggle-starship" ;;
-        6) COMMAND="help" ;;
-        7) COMMAND="" ;;
+        6) COMMAND="import-starship" ;;
+        7) COMMAND="use-starship"; COMMAND_ARG="default" ;;
+        8) COMMAND="use-starship"; COMMAND_ARG="host" ;;
+        9) COMMAND="restore"; read -r -p "Enter path to restore (home-relative or absolute): " COMMAND_ARG ;;
+        10) COMMAND="help" ;;
+        11) COMMAND="" ;;
         *) COMMAND="" ;;
     esac
 }
@@ -388,6 +685,7 @@ interactive_menu() {
 
 # Parse Args
 COMMAND=""
+COMMAND_ARG=""
 if [ "$#" -eq 0 ]; then
     INTERACTIVE=true
 fi
@@ -397,14 +695,18 @@ while [[ "$#" -gt 0 ]]; do
         -n|--dry-run) DRY_RUN=true ;;
         -f|--force) FORCE=true ;;
         -i|--interactive) INTERACTIVE=true ;;
-        install|uninstall|update|status|toggle-starship|help)
+        install|uninstall|update|status|toggle-starship|import-starship|use-starship|restore|help)
             if [ -z "$COMMAND" ]; then
                 COMMAND="$1"
+            elif [ -z "$COMMAND_ARG" ]; then
+                COMMAND_ARG="$1"
             fi
             ;;
         *)
             if [ -z "$COMMAND" ]; then
                 COMMAND="$1"
+            elif [ -z "$COMMAND_ARG" ]; then
+                COMMAND_ARG="$1"
             fi
             ;;
     esac
@@ -443,6 +745,19 @@ case "$COMMAND" in
         ;;
     toggle-starship)
         toggle_starship
+        ;;
+    import-starship)
+        import_host_starship_config
+        ;;
+    use-starship)
+        if [ -z "$COMMAND_ARG" ]; then
+            error "Missing variant. Usage: ./manage.sh use-starship [default|host]"
+            exit 1
+        fi
+        set_starship_variant "$COMMAND_ARG"
+        ;;
+    restore)
+        restore_backup_item "$COMMAND_ARG"
         ;;
     *)
         show_help
